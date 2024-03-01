@@ -1,0 +1,9 @@
+#!/bin/bash
+
+#set -x
+set -e
+
+CMD_PATH="$HOME/.config/quick_cmds_list"
+selected_cmd="$(cat "$CMD_PATH" | dmenu -p cmds: -h 36 -l 20)"
+
+wezterm cli send-text "$selected_cmd"

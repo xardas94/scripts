@@ -1,0 +1,49 @@
+#!/bin/bash
+
+#exec 19>/tmp/open_at.log
+#BASH_XTRACEFD=19
+#set -x
+
+set -e
+
+QT_CREATOR_LIST="text/x-c++src \
+text/x-csrc \
+text/x-chdr \
+text/x-cmake"
+
+EDITOR_LIST="text/x-shellscript \
+application/x-shellscript \
+application/json \
+text/plain \
+text/x-lua \
+text/x-makefile \
+text/x-python \
+text/x-python3"
+
+
+function list_include_item {
+    local list="$1"
+    local item="$2"
+    if [[ $list =~ (^|[[:space:]])"$item"($|[[:space:]]) ]] ; then
+      return 0
+    fi
+
+    return 1
+}
+
+ARGS=$@
+FILE_PATH=$(echo "${ARGS%:*}")
+#FILE_PATH=$(echo "${ARGS%#*}")
+
+case "$FILE_PATH" in
+    *.qbs) MIME="text/x-cmake" ;;
+    *)     MIME=$(xdg-mime query filetype "$FILE_PATH") ;;
+esac
+
+if $(list_include_item "$QT_CREATOR_LIST" "$MIME"); then
+    qtcreator -client "$ARGS"
+elif $(list_include_item "$EDITOR_LIST" "$MIME"); then
+    cudatext "$ARGS"
+else
+    /bin/xdg-open "$FILE_PATH"
+fi

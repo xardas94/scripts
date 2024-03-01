@@ -1,0 +1,179 @@
+#!/bin/bash
+set -e
+#set -x
+
+SCRIPT_NAME=$(basename "$0")
+TMP_DIR="$XDG_RUNTIME_DIR/$SCRIPT_NAME.wids/"
+
+function usage {
+cat <<EOF
+usage: $(basename "$0") [-asuR] [-i] command...
+OPTIONS:
+  -a    above, window will be always on top
+  -s    skip taskbar icon
+  -u    undecorate
+  -R    raise window on current desktop
+  -i    instance id
+
+Required tools: wmctrl, xdotool, xprop, xwininfo
+EOF
+}
+
+function get_pid_by_win_id {
+    xprop -id $1 _NET_WM_PID | grep -Eo [0-9]+ || echo 0
+}
+
+function get_active_win_id {
+    printf '0x%x\n' $(xdotool getactivewindow)
+}
+
+function set_above {
+    wmctrl -ir $1 -b add,above
+}
+
+function skip_taskbar {
+    wmctrl -ir $1 -b add,skip_taskbar
+}
+
+function undecorate {
+    xprop -id $1 -f _MOTIF_WM_HINTS 32c -set _MOTIF_WM_HINTS "0x2, 0x0, 0x0, 0x0, 0x0"
+}
+
+function minimize {
+    xdotool windowminimize --sync $1
+}
+
+function activate_window {
+    xdotool windowactivate --sync $1
+}
+
+function raise {
+    wmctrl -iR $1
+}
+
+function get_visibility {
+    xwininfo -id "$1" 2> /dev/null | gawk '/Map State/ {print $3}'
+}
+
+function launch {
+    local cmd="$@"
+    local program=$(echo $cmd | cut -d" " -f1) 
+    local blacklist pid visible_wid wids wid program_wid
+    
+    # save blacklist all existing wids of program
+    # change pid for programs where $! won't always work (e.g. one pid for all windows)
+    if [[ $program == wezterm ]]; then
+        blacklist=$(xdotool search --classname wezterm)
+        pid=$(pgrep -x wezterm-gui)
+    elif [[ $program == nemo ]]; then
+        pid=$(pgrep -x nemo)
+    elif [[ $program == cudatext ]]; then
+        pid=$(pgrep -x cudatext)
+    elif [[ $program == chromium ]]; then
+        pid=$(pgrep -xa chromium | gawk '!/--type/ {print $1}')
+    elif [[ $program == chromium-browser ]]; then
+        pid=$(pgrep -xa chromium-browse | gawk '!/--type/ {print $1}')
+    elif [[ $program == firefox ]]; then
+        blacklist=$(xdotool search --name firefox)    
+    else
+        blacklist=$(xdotool search --classname "$program")
+    fi
+
+    #launch cmd
+    #"$cmd" > "$TMP_DIR/program-output" &
+    "$@" > "$TMP_DIR/program-output" &
+
+    #find & return window id
+    if [[ -z $pid ]]; then
+        # for normal programs or when one of the programs above hadn't already been started
+        pid=$!
+    fi
+    visible_wid=false
+    counter=0
+    while : ; do
+        #if [[ $program == wezterm ]]; then
+            #pid=$(pgrep -x wezterm-gui)
+        #el
+        if [[ $program == firefox ]]; then
+            wids=$(xdotool search --name firefox)
+        elif [[ $program == cudatext ]]; then
+            wids=$(xdotool search --onlyvisible --name $program)
+        else
+            wids=$(xdotool search --onlyvisible --pid "$pid")
+        fi
+        
+        if [[ -n $wids ]]; then
+            while read -r wid; do
+                if [[ ! $blacklist =~ (^|$'\n')$wid($|$'\n') ]] && [[ $(get_visibility "$wid") == IsViewable ]]; then
+                    visible_wid=true
+                    program_wid=$wid
+                fi
+            done <<< "$wids"
+        fi
+
+        [[ $visible_wid == true ]] && break
+        ((counter=counter+1))
+        sleep 0.01
+    done
+    
+    echo -n "$program_wid"
+}
+
+###
+
+while getopts "hasuRi:" options; do
+    case "${options}" in
+        h) usage; exit 0;;
+        a) ABOVE="";;
+        s) SKIPTASKBAR="";;
+        u) UNDECORATE="";;
+        R) RAISE="";;
+        i) ID=${OPTARG};;
+        :) echo "Error: -${OPTARG} requires an argument.";&
+        *) usage; exit 1;;
+    esac
+done
+shift $((OPTIND -1))
+
+CMD=$@
+PROGRAM=$(echo $CMD | cut -d" " -f1)
+[ $PROGRAM = cinnamon-settings ] && PROGRAM="cinnamon-settin"
+PROGRAM_WID="$TMP_DIR/$PROGRAM$ID"
+
+[ ! -d "$TMP_DIR" ] && mkdir -p "$TMP_DIR"
+
+### check & invalidate file
+if [ -f "$PROGRAM_WID" ]; then
+    wid=$(cat "$PROGRAM_WID" | cut -d" " -f1)
+    pid=$(get_pid_by_win_id "$wid") 
+
+    if pgrep "$PROGRAM" | grep -owq $pid ; then 
+        cmd=$(cat "$PROGRAM_WID" | cut -d" " -f2-)
+        ! [[ $cmd =~ .*"$CMD"* ]] && rm -f "$PROGRAM_WID"
+    else
+        rm -f "$PROGRAM_WID"
+    fi
+fi
+
+### launch app
+if [ ! -f "$PROGRAM_WID" ]; then
+    win_id=$(launch $CMD)
+
+      re='^[0-9]+$'
+    if ! [[ $win_id =~ $re ]]; then exit 1; fi 
+    echo "$win_id $CMD" > "$PROGRAM_WID"
+
+    [[ -n ${UNDECORATE+x} ]] && undecorate $win_id
+    [[ -n ${SKIPTASKBAR+x} ]] && skip_taskbar $win_id
+    [[ -n ${ABOVE+x} ]] && set_above $win_id
+    
+    exit 0
+fi
+
+# toggle app
+win_id=$(cat "$PROGRAM_WID" | cut -d" " -f1)
+if ((win_id == $(get_active_win_id))); then
+    minimize $win_id
+else
+    [[ -n ${RAISE+x} ]] && raise $win_id || activate_window $win_id
+fi
