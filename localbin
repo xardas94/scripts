@@ -1,6 +1,0 @@
-#!/bin/sh
-set -e
-
-src=$(readlink -e "$1")
-dst="$LOCAL_BIN"
-ln -s "$src" "$dst"
