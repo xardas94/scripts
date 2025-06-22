@@ -67,8 +67,8 @@ function launch {
         pid=$(pgrep -x wezterm-gui)
     elif [[ $program == nemo ]]; then
         pid=$(pgrep -x nemo)
-    elif [[ $program == cudatext ]]; then
-        pid=$(pgrep -x cudatext)
+    elif [[ $program == kate ]]; then
+        pid=$(pgrep -x kate)
     elif [[ $program == chromium ]]; then
         pid=$(pgrep -xa chromium | gawk '!/--type/ {print $1}')
     elif [[ $program == chromium-browser ]]; then

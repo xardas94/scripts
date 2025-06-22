@@ -43,7 +43,7 @@ esac
 if $(list_include_item "$QT_CREATOR_LIST" "$MIME"); then
     qtcreator -client "$ARGS"
 elif $(list_include_item "$EDITOR_LIST" "$MIME"); then
-    cudatext "$ARGS"
+    kate "$ARGS"
 else
     /bin/xdg-open "$FILE_PATH"
 fi
