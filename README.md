@@ -5,6 +5,7 @@
 - **hgp** -- ripgrep wrapper with syntax highlight (requires [delta](https://dandavison.github.io/delta/)) piped to a pager
 - **open_at** -- tries to open hyperlink `file:line` at `line`
 - **quick_cmds** -- select command and send it to [wezterm](https://wezfurlong.org/wezterm/index.html) (requires [dmenu](https://tools.suckless.org/dmenu/))
+- **пше** -- transliterate git command misstyped in UA keyboard layout: `пше вшаа -> git diff` (optional [timg](https://github.com/hzeller/timg), [SoX](https://sourceforge.net/projects/sox/))
 
 ## X11-utils:
 - **toggle_app** -- my [drawer](https://github.com/lharding/lsh-bin/blob/master/drawer) implementation

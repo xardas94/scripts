@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -e
+# set -x
+
+[ -n "$PSZE_MSG" ] && echo -e "\033[0;31m$PSZE_MSG\033[0m"
+[ -f "$PSZE_AUDIO_PATH" ] && play -q "$PSZE_AUDIO_PATH" &> /dev/null &
+[ -f "$PSZE_VIDEO_PATH" ] && timg -V "$PSZE_VIDEO_PATH"
+wait
+[ -f "$PSZE_VIDEO_PATH" ] && clear
+
+ARGS=$(echo $@ | sed 'y/йцукенгшщзхїфівапролджєґячсмитьбю.ЙЦУКЕНГШЩЗХЇФІВАПРОЛДЖЄҐЯЧСМИТЬБЮ,ʼ"№;%:?/qwertyuiop[]asdfghjkl;\x27\x5Czxcvbnm,.\x2FQWERTYUIOP{}ASDFGHJKL:"|ZXCVBNM<>?~@#$%^&/')
+echo -e "\033[0;32mgit $ARGS\033[0m"
+git $ARGS
