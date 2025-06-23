@@ -1,6 +1,6 @@
 # Scripts
 ## Utils
-- **delta_wraper** -- resize window before calling delta
+- **delta_wrapper** -- resize window before calling delta
 - **hg** -- ripgrep wrapper to enable hyperlink in format `file:line`
 - **hgp** -- ripgrep wrapper with syntax highlight (requires [delta](https://dandavison.github.io/delta/)) piped to a pager
 - **open_at** -- tries to open hyperlink `file:line` at `line`
