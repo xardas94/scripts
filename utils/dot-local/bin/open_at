@@ -1,4 +1,7 @@
 #!/bin/bash
+# Open a file in a suitable app, at a line when the app supports it.
+# Usage: open_at PATH [LINE [COL]]
+#        open_at PATH:LINE[:COL]
 
 #exec 19>/tmp/open_at.log
 #BASH_XTRACEFD=19
@@ -6,44 +9,36 @@
 
 set -e
 
-QT_CREATOR_LIST="text/x-c++src \
-text/x-csrc \
-text/x-chdr \
-text/x-cmake"
+file=$1
+line=$2
+col=$3
 
-EDITOR_LIST="text/x-shellscript \
-application/x-shellscript \
-application/json \
-text/plain \
-text/x-lua \
-text/x-makefile \
-text/x-python \
-text/x-python3"
-
-
-function list_include_item {
-    local list="$1"
-    local item="$2"
-    if [[ $list =~ (^|[[:space:]])"$item"($|[[:space:]]) ]] ; then
-      return 0
+# PATH:LINE[:COL] form; don't split when the whole string is an existing file
+if [[ -z $line && ! -e $file ]]; then
+    if [[ $file =~ ^(.+):([0-9]+):([0-9]+)$ ]]; then
+        file=${BASH_REMATCH[1]}
+        line=${BASH_REMATCH[2]}
+        col=${BASH_REMATCH[3]}
+    elif [[ $file =~ ^(.+):([0-9]+)$ ]]; then
+        file=${BASH_REMATCH[1]}
+        line=${BASH_REMATCH[2]}
     fi
+fi
 
-    return 1
-}
-
-ARGS=$@
-FILE_PATH=$(echo "${ARGS%:*}")
-#FILE_PATH=$(echo "${ARGS%#*}")
-
-case "$FILE_PATH" in
-    *.qbs) MIME="text/x-cmake" ;;
-    *)     MIME=$(xdg-mime query filetype "$FILE_PATH") ;;
+case "$file" in
+    *.c|*.cc|*.cpp|*.cxx|*.h|*.hh|*.hpp|*.hxx|*.cmake|*/CMakeLists.txt|CMakeLists.txt|*.qbs)
+        exec qtcreator -client "$file${line:+:$line}${line:+${col:+:$col}}"
+        ;;
 esac
 
-if $(list_include_item "$QT_CREATOR_LIST" "$MIME"); then
-    qtcreator -client "$ARGS"
-elif $(list_include_item "$EDITOR_LIST" "$MIME"); then
-    kate "$ARGS"
-else
-    /bin/xdg-open "$FILE_PATH"
-fi
+case "$(file --mime-type -b -- "$file")" in
+    text/*|inode/x-empty|application/json|application/x-shellscript|application/javascript|application/xml)
+        args=()
+        [[ -n $line ]] && args+=(-l "$line")
+        [[ -n $line && -n $col ]] && args+=(-c "$col")
+        exec kate "${args[@]}" -- "$file"
+        ;;
+    *)
+        exec /bin/xdg-open "$file"
+        ;;
+esac
