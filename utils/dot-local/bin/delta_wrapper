@@ -1,5 +1,5 @@
 #!/bin/sh
 # set -x
 
-resize &>/dev/null
-delta --side-by-side --width $COLUMNS
+# pass width only when known (e.g. exported by forgit.bash for fzf previews)
+exec delta ${COLUMNS:+--width "$COLUMNS"}
