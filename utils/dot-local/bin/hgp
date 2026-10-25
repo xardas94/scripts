@@ -1,3 +1,4 @@
 #!/bin/sh
+# delta pages itself; piping to less would drop its n/N file navigation
 
-rg -uu --json "$@" | delta | less
+rg -uu -g '!.git' --smart-case --json "$@" | delta

@@ -3,6 +3,7 @@
 - **delta_wrapper** -- resize window before calling delta
 - **hg** -- ripgrep wrapper to enable hyperlink in format `file:line`
 - **hgp** -- ripgrep wrapper with syntax highlight (requires [delta](https://dandavison.github.io/delta/)) piped to a pager
+- **hgf** -- interactive ripgrep in [fzf](https://github.com/junegunn/fzf) with [bat](https://github.com/sharkdp/bat) preview, `Enter` opens the match with **open_at**
 - **open_at** -- tries to open hyperlink `file:line` at `line`
 - **quick_cmds** -- select command and send it to [wezterm](https://wezfurlong.org/wezterm/index.html) (requires [dmenu](https://tools.suckless.org/dmenu/))
 - **пше** -- transliterate git command misstyped in UA keyboard layout: `пше вшаа -> git diff` (optional [timg](https://github.com/hzeller/timg), [SoX](https://sourceforge.net/projects/sox/))

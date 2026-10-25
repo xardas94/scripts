@@ -1,0 +1,12 @@
+#!/bin/bash
+# Interactive ripgrep: live search, bat preview at the match, Enter opens with open_at
+
+RG="rg -uu -g '!.git' --smart-case --column --line-number --no-heading --color=always"
+
+fzf --ansi --disabled --query "$*" \
+    --bind "start:reload:[ -n {q} ] && $RG {q} || :" \
+    --bind "change:reload:sleep 0.1; [ -n {q} ] && $RG {q} || :" \
+    --delimiter : \
+    --preview 'bat --color=always --style=numbers --highlight-line {2} -- {1}' \
+    --preview-window 'up,60%,border-bottom,+{2}+3/3,~3' \
+    --bind 'enter:become(open_at {1} {2} {3})'

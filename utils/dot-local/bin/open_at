@@ -25,6 +25,9 @@ if [[ -z $line && ! -e $file ]]; then
     fi
 fi
 
+# delta links file headers to line 0
+[[ $line == 0 ]] && line= col=
+
 case "$file" in
     *.c|*.cc|*.cpp|*.cxx|*.h|*.hh|*.hpp|*.hxx|*.cmake|*/CMakeLists.txt|CMakeLists.txt|*.qbs)
         exec qtcreator -client "$file${line:+:$line}${line:+${col:+:$col}}"
